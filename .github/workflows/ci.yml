@@ -113,8 +113,9 @@ jobs:
           file: Dockerfile.prod
           push: true
           tags: |
-            ghcr.io/${ env.IMAGE_NAME }}:latest
-            ghcr.io/${ env.IMAGE_NAME }}:${ github.sha }}
+            ghcr.io/${{ env.IMAGE_NAME }}:latest
+            ghcr.io/${{ env.IMAGE_NAME }}:${{ github.sha }}
+
 
       - name: Optionally push to Docker Hub
         if: ${{ env.DOCKERHUB_USERNAME && env.DOCKERHUB_TOKEN && env.DOCKERHUB_IMAGE }}
@@ -124,8 +125,8 @@ jobs:
           file: Dockerfile.prod
           push: true
           tags: |
-            ghcr.io/${{ env.IMAGE_NAME }}:latest
-            ghcr.io/${{ env.IMAGE_NAME }}:${{ github.sha }}
+            ${{ env.DOCKERHUB_IMAGE }}:latest
+            ${{ env.DOCKERHUB_IMAGE }}:${ github.sha }}
       - name: Create release (optional)
         if: github.event_name == 'workflow_dispatch'
         uses: ncipollo/release-action@v1
