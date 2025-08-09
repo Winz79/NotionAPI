@@ -84,7 +84,7 @@ jobs:
 
       - name: Prepare lowercase image names
         run: |
-          echo "IMAGE_NAME=$(echo \"${GITHUB_REPOSITORY}\" | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
+          echo "IMAGE_NAME=$(echo ${GITHUB_REPOSITORY} | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
           if [ -n "${DOCKERHUB_USERNAME:-}" ]; then
             REPO_NAME="${GITHUB_REPOSITORY##*/}"
             echo "DOCKERHUB_IMAGE=$(echo \"${DOCKERHUB_USERNAME}/${REPO_NAME}\" | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
