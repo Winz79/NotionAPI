@@ -61,30 +61,10 @@ jobs:
       - name: Run unit tests with coverage
         run: |
           python -m pytest --cov=app --cov-report=xml:coverage.xml --cov-report=term-missing tests/unit -q
-      - name: Build and push image to GHCR
-        uses: docker/build-push-action@v4
-        with:
-          context: .
-          file: Dockerfile.prod
-          push: true
-          tags: |
-            ghcr.io/${{ toLower(github.repository_owner) }}/${{ toLower(github.event.repository.name) }}:latest
-            ghcr.io/${{ toLower(github.repository_owner) }}/${{ toLower(github.event.repository.name) }}:${{ github.sha }}
-
-      - name: Optionally push to Docker Hub
-        if: ${{ env.DOCKERHUB_USERNAME && env.DOCKERHUB_TOKEN }}
-        uses: docker/build-push-action@v4
-        with:
-          context: .
-          file: Dockerfile.prod
-          push: true
-          tags: |
-            ${{ toLower(env.DOCKERHUB_USERNAME) }}/${{ toLower(github.event.repository.name) }}:latest
-            ${{ toLower(env.DOCKERHUB_USERNAME) }}/${{ toLower(github.event.repository.name) }}:${{ github.sha }}
+      - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
         with:
           files: coverage.xml
-
   build-and-publish:
     runs-on: ubuntu-latest
     needs: test
@@ -118,8 +98,8 @@ jobs:
           file: Dockerfile.prod
           push: true
           tags: |
-            ghcr.io/${{ github.repository }}:latest
-            ghcr.io/${{ github.repository }}:${{ github.sha }}
+            ghcr.io/${ toLower(github.repository) }}:latest
+            ghcr.io/${ toLower(github.repository) }}:${ github.sha }}
       - name: Optionally push to Docker Hub
         if: ${{ env.DOCKERHUB_USERNAME && env.DOCKERHUB_TOKEN }}
         uses: docker/build-push-action@v4
@@ -128,8 +108,8 @@ jobs:
           file: Dockerfile.prod
           push: true
           tags: |
-            ${{ env.DOCKERHUB_USERNAME }}/${{ github.event.repository.name }}:latest
-            ${{ env.DOCKERHUB_USERNAME }}/${{ github.event.repository.name }}:${{ github.sha }}
+            ${{ toLower(env.DOCKERHUB_USERNAME) }}/${ toLower(github.event.repository.name) }}:latest
+            ${{ toLower(env.DOCKERHUB_USERNAME) }}/${ toLower(github.event.repository.name) }}:${ github.sha }}
       - name: Create release (optional)
         if: github.event_name == 'workflow_dispatch'
         uses: ncipollo/release-action@v1
