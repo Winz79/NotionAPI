@@ -61,7 +61,26 @@ jobs:
       - name: Run unit tests with coverage
         run: |
           python -m pytest --cov=app --cov-report=xml:coverage.xml --cov-report=term-missing tests/unit -q
-      - name: Upload coverage to Codecov
+      - name: Build and push image to GHCR
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          file: Dockerfile.prod
+          push: true
+          tags: |
+            ghcr.io/${{ toLower(github.repository_owner) }}/${{ toLower(github.event.repository.name) }}:latest
+            ghcr.io/${{ toLower(github.repository_owner) }}/${{ toLower(github.event.repository.name) }}:${{ github.sha }}
+
+      - name: Optionally push to Docker Hub
+        if: ${{ env.DOCKERHUB_USERNAME && env.DOCKERHUB_TOKEN }}
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          file: Dockerfile.prod
+          push: true
+          tags: |
+            ${{ toLower(env.DOCKERHUB_USERNAME) }}/${{ toLower(github.event.repository.name) }}:latest
+            ${{ toLower(env.DOCKERHUB_USERNAME) }}/${{ toLower(github.event.repository.name) }}:${{ github.sha }}
         uses: codecov/codecov-action@v4
         with:
           files: coverage.xml
