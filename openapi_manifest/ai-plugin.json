@@ -1,0 +1,18 @@
+{
+  "schema_version": "v1",
+  "name_for_human": "Notion API",
+  "name_for_model": "notion_api",
+  "description_for_human": "A wrapper API for Notion to be used with ChatGPT Actions and OpenWebUI tools",
+  "description_for_model": "Allows listing databases, querying database rows, retrieving pages, creating and updating pages in Notion.",
+  "auth": {
+    "type": "none"
+  },
+  "api": {
+    "type": "openapi",
+    "url": "YOUR_HOST}/openapi.json",
+    "is_user_authenticated": false
+  },
+  "logo_url": "YOUR_HOST}/logo.png",
+  "contact_email": "you@example.com",
+  "legal_info_url": "https://example.com/legal"
+}
