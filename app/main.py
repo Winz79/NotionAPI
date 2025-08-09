@@ -9,22 +9,23 @@ load_dotenv()
 
 from notion_client import Client
 
-NOTION_TOKEN = os.getenv("NOTION_TOKEN")
-# Only initialise the Notion client when a token is available.  This allows
-# the application (and its tests) to start without a configured token.  The
-# individual request handlers will raise an HTTP error if the client is not
-# configured, which keeps the module import side-effect free and makes the
-# module easier to test.
-notion = Client(auth=NOTION_TOKEN) if NOTION_TOKEN else None
-
+# Defer client creation until it's actually needed. Importing the module
+# doesn't require configured credentials which keeps startup side-effect
+# free and makes testing easier.
+notion: Optional[Client] = None
 
 def _get_client() -> Client:
     """Return the configured Notion client or raise an HTTP error."""
-    if notion is None:
+    global notion
+    if notion is not None:
+        return notion
+    token = os.getenv("NOTION_TOKEN")
+    if token is None:
         raise HTTPException(
             status_code=500,
             detail="Notion client not configured – set NOTION_TOKEN",
         )
+    notion = Client(auth=token)
     return notion
 
 app = FastAPI(title="Notion API for ChatGPT Actions",
