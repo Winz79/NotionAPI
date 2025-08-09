@@ -28,11 +28,11 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${ hashFiles('**/requirements.txt') }}
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
       - name: Install flake8
         run: |
           python -m pip install --upgrade pip
-          pip install flake8
+          python -m pip install flake8
       - name: Run flake8
         run: |
           flake8 || true
@@ -53,14 +53,14 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${ hashFiles('**/requirements.txt') }}
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
       - name: Install dependencies
         run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
+          python -m pip install --upgrade pip setuptools wheel
+          python -m pip install -r requirements.txt
       - name: Run unit tests with coverage
         run: |
-          pytest --cov=app --cov-report=xml:coverage.xml --cov-report=term-missing tests/unit -q
+          python -m pytest --cov=app --cov-report=xml:coverage.xml --cov-report=term-missing tests/unit -q
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
         with:
@@ -99,8 +99,8 @@ jobs:
           file: Dockerfile.prod
           push: true
           tags: |
-            ghcr.io/${ github.repository_owner }}/${ github.repository }}:latest
-            ghcr.io/${ github.repository_owner }}/${ github.repository }}:${ github.sha }}
+            ghcr.io/${{ github.repository }}:latest
+            ghcr.io/${{ github.repository }}:${{ github.sha }}
       - name: Optionally push to Docker Hub
         if: ${{ env.DOCKERHUB_USERNAME && env.DOCKERHUB_TOKEN }}
         uses: docker/build-push-action@v4
@@ -109,13 +109,13 @@ jobs:
           file: Dockerfile.prod
           push: true
           tags: |
-            ${{ env.DOCKERHUB_USERNAME }}/${ github.repository }}:latest
-            ${{ env.DOCKERHUB_USERNAME }}/${ github.repository }}:${ github.sha }}
+            ${{ env.DOCKERHUB_USERNAME }}/${{ github.event.repository.name }}:latest
+            ${{ env.DOCKERHUB_USERNAME }}/${{ github.event.repository.name }}:${{ github.sha }}
       - name: Create release (optional)
         if: github.event_name == 'workflow_dispatch'
         uses: ncipollo/release-action@v1
         with:
-          tag: v${ github.run_number }}
+          tag: v${{ github.run_number }}
           name: "Automated release ${{ github.run_number }}"
           body: |
             Automated release from CI build ${{ github.run_id }}

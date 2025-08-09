@@ -9,11 +9,24 @@ load_dotenv()
 
 from notion_client import Client
 
-NOTION_TOKEN = os.getenv("NOTION_TOKEN")
-if not NOTION_TOKEN:
-    raise RuntimeError("NOTION_TOKEN not found in environment. Please set it in .env or env vars")
+# Defer client creation until it's actually needed. Importing the module
+# doesn't require configured credentials which keeps startup side-effect
+# free and makes testing easier.
+notion: Optional[Client] = None
 
-notion = Client(auth=NOTION_TOKEN)
+def _get_client() -> Client:
+    """Return the configured Notion client or raise an HTTP error."""
+    global notion
+    if notion is not None:
+        return notion
+    token = os.getenv("NOTION_TOKEN")
+    if token is None:
+        raise HTTPException(
+            status_code=500,
+            detail="Notion client not configured – set NOTION_TOKEN",
+        )
+    notion = Client(auth=token)
+    return notion
 
 app = FastAPI(title="Notion API for ChatGPT Actions",
               description="A lightweight wrapper around Notion API for ChatGPT Actions and OpenWebUI tools",
@@ -42,8 +55,11 @@ def health():
 @app.get("/v1/databases")
 async def list_databases():
     try:
-        resp = notion.search(filter={"property": "object", "value": "database"})
+        client = _get_client()
+        resp = client.search(filter={"property": "object", "value": "database"})
         return resp
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -51,40 +67,50 @@ async def list_databases():
 async def list_database_rows(database_id: str = Path(..., description="Notion Database ID"),
                              page_size: int = 50):
     try:
-        resp = notion.databases.query(database_id=database_id, page_size=page_size)
+        client = _get_client()
+        resp = client.databases.query(database_id=database_id, page_size=page_size)
         return resp
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/v1/pages/{page_id}")
 async def get_page(page_id: str = Path(..., description="Notion Page ID")):
     try:
-        page = notion.pages.retrieve(page_id=page_id)
-        blocks = notion.blocks.children.list(block_id=page_id)
+        client = _get_client()
+        page = client.pages.retrieve(page_id=page_id)
+        blocks = client.blocks.children.list(block_id=page_id)
         return {"page": page, "blocks": blocks}
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/v1/pages")
 async def create_page(req: CreatePageRequest):
     try:
+        client = _get_client()
         payload = {
             "parent": {"database_id": req.parent_database_id} if req.parent_database_id else {"type": "page_id"},
             "properties": req.properties
         }
         if req.children:
             payload["children"] = req.children
-        resp = notion.pages.create(**payload)
+        resp = client.pages.create(**payload)
         return resp
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.patch("/v1/pages/{page_id}")
 async def update_page(page_id: str, req: UpdatePageRequest):
     try:
+        client = _get_client()
         if not req.properties:
             raise HTTPException(status_code=400, detail="No properties provided")
-        resp = notion.pages.update(page_id=page_id, properties=req.properties)
+        resp = client.pages.update(page_id=page_id, properties=req.properties)
         return resp
     except HTTPException:
         raise
